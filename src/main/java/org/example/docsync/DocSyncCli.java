@@ -4,219 +4,135 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-public class DocSyncCli {
-    public static void main(String[] args) throws Exception {
-        String root = ".";
-        String action = "sync";
-        if (args.length >= 1) {
-            action = args[0];
-        }
-        if (args.length >= 2 && args[0].equals("--root")) {
-            action = "sync";
-            root = args[1];
-        }
-        if (args.length >= 2 && !args[0].equals("--root")) {
-            root = args[1];
-        }
+public final class DocSyncCli {
+    private DocSyncCli() {
+    }
 
-        switch (action) {
-            case "sync" -> sync(root);
-            case "verify" -> verify(root);
-            case "analyze" -> analyze(root);
-            default -> System.err.println("Usage: DocSyncCli {sync|verify|analyze} [root]");
+    public static void main(String[] args) {
+        try {
+            if (args.length == 0) {
+                throw new IllegalArgumentException("Usage: DocSyncCli {sync|verify} [--root PATH]");
+            }
+            String root = ".";
+            if (args.length == 2) {
+                root = args[1];
+            } else if (args.length == 3 && "--root".equals(args[1])) {
+                root = args[2];
+            } else if (args.length != 1) {
+                throw new IllegalArgumentException("Usage: DocSyncCli {sync|verify} [--root PATH]");
+            }
+            switch (args[0]) {
+                case "sync" -> sync(root);
+                case "verify" -> verify(root);
+                default -> throw new IllegalArgumentException("Unsupported command: " + args[0]);
+            }
+        } catch (IOException | IllegalArgumentException e) {
+            System.err.println("DocSync failed: " + e.getMessage());
+            for (Throwable suppressed : e.getSuppressed()) {
+                System.err.println("Additional failure: " + suppressed.getMessage());
+            }
+            System.exit(1);
         }
     }
 
-    public static void analyze(String root) throws IOException, InterruptedException {
-        List<String> changed = detectChanges(root);
-        for (String path : changed) {
-            System.out.println(path);
+    public static void sync(String root) throws IOException {
+        Path project = Path.of(root).toAbsolutePath().normalize();
+        Path report = project.resolve("docs/reports/sync-report.md");
+        try {
+            UiSync.Prepared prepared = UiSync.prepare(project);
+            List<BackendApiSync.Prepared> javaDocs = BackendApiSync.prepare(project);
+            List<String> actions = new ArrayList<>();
+            actions.add("- `docs/ui/student-ui.md`: " + (prepared.changed() ? "updated" : "already current"));
+            for (BackendApiSync.Prepared doc : javaDocs) {
+                actions.add("- `" + relative(project, doc.path()) + "`: "
+                        + (doc.changed() ? "updated" : "already current"));
+                if (doc.changed() && doc.path().endsWith("endpoints.md")) {
+                    for (String line : doc.original().lines().filter(line -> line.startsWith("| ")).toList()) {
+                        if (!doc.updated().lines().anyMatch(line::equals)) {
+                            actions.add("  - Removed/changed declaration row: " + line.replace("`", "\\`"));
+                        }
+                    }
+                }
+            }
+            UiSync.write(prepared);
+            for (BackendApiSync.Prepared doc : javaDocs) {
+                BackendApiSync.write(doc);
+            }
+            verify(root);
+            writeReport(report, "# Documentation Synchronization Report\n\n"
+                    + "## Status: Synchronized within supported scope\n\n"
+                    + "UI blocks, StudentService public methods and digest, declared routes, "
+                    + "Student record fields, and literal create-request form parameters were compared "
+                    + "against source. Manual text was preserved.\n\n"
+                    + String.join("\n", actions) + "\n\n"
+                    + "## Limitations and approval\n\n"
+                    + "Explicit source scan, not Git impact analysis. Only the four mapped documents "
+                    + "are supported; unchanged documents are not rewritten. Route declarations are "
+                    + "separate from HTTP dispatch. Model fields are not proof of wire-format behavior. "
+                    + "Business-logic meaning requires human review. No commit or merge was performed.\n");
+            System.out.println("UI, backend and API documentation synchronized within supported scope.");
+        } catch (IOException | IllegalArgumentException e) {
+            try {
+                writeReport(report, "# Documentation Synchronization Report\n\n"
+                        + "## Status: Failed\n\n"
+                        + "Reason: " + String.valueOf(e.getMessage()).replace("\r", " ")
+                                .replace("\n", " ") + "\n\n"
+                        + "Synchronization did not complete. Some documents may have been written; "
+                        + "inspect the documentation before retrying.\n");
+            } catch (IOException reportError) {
+                e.addSuppressed(reportError);
+            }
+            if (e instanceof IOException) {
+                throw (IOException) e;
+            }
+            throw new IOException("Synchronization failed: " + e.getMessage(), e);
         }
-    }
-
-    public static void sync(String root) throws IOException, InterruptedException {
-        Path project = Paths.get(root).toAbsolutePath().normalize();
-        ensureDirectories(project);
-
-        List<String> changed = detectChanges(root);
-        String report = makeSyncReport(changed);
-        Files.writeString(project.resolve("docs/reports/sync-report.md"), report, StandardCharsets.UTF_8);
-
-        writeUiDoc(project);
-        writeBackendDoc(project);
-        writeApiDocs(project);
-        System.out.println("Documentation synchronized for " + changed.size() + " changed file(s).");
     }
 
     public static void verify(String root) throws IOException {
-        Path project = Paths.get(root).toAbsolutePath().normalize();
-        List<String> checks = List.of(
-            "studentName",
-            "studentEmail",
-            "validationRules",
-            "createStudent",
-            "GET /students",
-            "POST /students",
-            "DELETE /students/{id}"
-        );
-        boolean ok = true;
-        for (String marker : checks) {
-            boolean found = Files.walk(project)
-                .filter(path -> path.toString().endsWith(".md"))
-                .map(path -> {
-                    try {
-                        return Files.readString(path, StandardCharsets.UTF_8);
-                    } catch (IOException e) {
-                        return "";
-                    }
-                })
-                .anyMatch(content -> content.contains(marker));
-            if (!found) {
-                ok = false;
-                System.out.println("Missing validation marker: " + marker);
+        Path project = Path.of(root).toAbsolutePath().normalize();
+        Path report = project.resolve("docs/reports/verify-report.md");
+        try {
+            List<String> stale = new ArrayList<>();
+            if (UiSync.prepare(project).changed()) {
+                stale.add("docs/ui/student-ui.md");
             }
-        }
-        if (!ok) {
-            System.exit(1);
-        }
-        System.out.println("Documentation verification passed.");
-    }
-
-    private static List<String> detectChanges(String root) throws IOException, InterruptedException {
-        Path project = Paths.get(root).toAbsolutePath().normalize();
-        Path git = project.resolve(".git");
-        if (Files.exists(git)) {
-            ProcessBuilder pb = new ProcessBuilder(
-                "C:\\Program Files\\Git\\bin\\git.exe", "-C", project.toString(), "diff", "--name-status", "HEAD"
-            );
-            pb.redirectErrorStream(true);
-            Process process = pb.start();
-            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            int exit = process.waitFor();
-            if (exit == 0 && !output.isBlank()) {
-                List<String> items = new ArrayList<>();
-                for (String line : output.split("\\R")) {
-                    String cleaned = line.trim();
-                    if (!cleaned.isEmpty()) {
-                        items.add(cleaned);
-                    }
+            for (BackendApiSync.Prepared doc : BackendApiSync.prepare(project)) {
+                if (doc.changed()) {
+                    stale.add(relative(project, doc.path()));
                 }
-                return items;
             }
-        }
-        List<String> fallback = new ArrayList<>();
-        if (Files.exists(project.resolve("frontend"))) {
-            fallback.add("frontend/index.html");
-        }
-        if (Files.exists(project.resolve("src/main/java"))) {
-            fallback.add("src/main/java/org/example/service/StudentService.java");
-            fallback.add("src/main/java/org/example/api/StudentApiServer.java");
-        }
-        return fallback;
-    }
-
-    private static String makeSyncReport(List<String> changed) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("# Documentation Synchronization Report\n\n");
-        sb.append("## Source change summary\n");
-        if (changed.isEmpty()) {
-            sb.append("No changed files detected.\n");
-        } else {
-            for (String item : changed) {
-                String type = classify(item);
-                sb.append("- `").append(item).append("` -> ").append(type).append("\n");
+            if (!stale.isEmpty()) {
+                throw new IOException("STALE: " + String.join(", ", stale));
             }
+            writeReport(report, "# Verification Report\n\n## Result: PASS within supported scope\n\n"
+                    + "The generated UI, StudentService, declared-route, Student-record, and create-request "
+                    + "blocks match current source. Manual content and actual HTTP behavior are not verified. "
+                    + "Other application sources and documents are outside this verifier's scope.\n");
+            System.out.println("Documentation matches source within supported scope.");
+        } catch (IOException | IllegalArgumentException e) {
+            try {
+                writeReport(report, "# Verification Report\n\n## Result: FAIL\n\n"
+                        + String.valueOf(e.getMessage()).replace("\r", " ").replace("\n", " ") + "\n");
+            } catch (IOException reportFailure) {
+                e.addSuppressed(reportFailure);
+            }
+            if (e instanceof IOException) {
+                throw (IOException) e;
+            }
+            throw new IOException("Invalid documentation or source: " + e.getMessage(), e);
         }
-        sb.append("\n## Actions\n");
-        sb.append("- Updated UI documentation for front-end field and validation changes.\n");
-        sb.append("- Updated backend documentation for service and model changes.\n");
-        sb.append("- Updated API route and request/response documentation.\n");
-        return sb.toString();
     }
 
-    private static String classify(String path) {
-        String lower = path.toLowerCase(Locale.ROOT);
-        if (lower.contains("frontend") || lower.contains("index.html") || lower.contains("app.js")) {
-            return "UI";
-        }
-        if (lower.contains("api") || lower.contains("route") || lower.contains("endpoint")) {
-            return "API";
-        }
-        return "BACKEND";
+    private static String relative(Path root, Path path) {
+        return root.relativize(path).toString().replace('\\', '/');
     }
 
-    private static void writeUiDoc(Path project) throws IOException {
-        String content = "# Student UI Documentation\n\n" +
-            "<!-- docsync:begin ui-fields sources=frontend/index.html -->\n" +
-            "## Form fields\n\n" +
-            "| Field | Type | Required | Notes |\n" +
-            "| --- | --- | --- | --- |\n" +
-            "| studentName | text | Yes | Student name |\n" +
-            "| studentEmail | email | Yes | Valid email address required |\n" +
-            "| studentDepartment | select | Yes | Department dropdown |\n" +
-            "\nThe validationRules object in app.js validates the same UI fields.\n\n<!-- docsync:end ui-fields -->\n\n" +
-            "<!-- docsync:begin ui-validation sources=frontend/app.js -->\n" +
-            "## Validation rules\n\n" +
-            "- studentName: required, minimum 2 chars\n" +
-            "- studentEmail: required and must match standard email pattern\n" +
-            "- studentDepartment: required\n\n" +
-            "validationRules: studentName, studentEmail, studentDepartment\n\n" +
-            "<!-- docsync:end ui-validation -->\n";
-        Files.createDirectories(project.resolve("docs/ui"));
-        Files.writeString(project.resolve("docs/ui/student-ui.md"), content, StandardCharsets.UTF_8);
-    }
-
-    private static void writeBackendDoc(Path project) throws IOException {
-        String content = "# Student Backend Documentation\n\n" +
-            "<!-- docsync:begin backend-service sources=src/main/java/org/example/service/StudentService.java -->\n" +
-            "## Service responsibilities\n\n" +
-            "- createStudent(String name, String email, String department)\n" +
-            "- getStudents()\n" +
-            "- getStudent(String id)\n" +
-            "- deleteStudent(String id)\n\n" +
-            "<!-- docsync:end backend-service -->\n";
-        Files.createDirectories(project.resolve("docs/backend"));
-        Files.writeString(project.resolve("docs/backend/student-service.md"), content, StandardCharsets.UTF_8);
-    }
-
-    private static void writeApiDocs(Path project) throws IOException {
-        String endpoints = "# API Route Documentation\n\n" +
-            "<!-- docsync:begin api-routes sources=src/main/java/org/example/api/StudentApiServer.java -->\n" +
-            "Routes: GET /students, POST /students, GET /students/{id}, DELETE /students/{id}.\n\n" +
-            "| Method | Path | Summary | Request Type | Response Type |\n" +
-            "| --- | --- | --- | --- | --- |\n" +
-            "| GET | /students | List all students | none | Student[] |\n" +
-            "| POST | /students | Create a student | StudentRequest | Student |\n" +
-            "| GET | /students/{id} | Fetch a student by id | none | Student |\n" +
-            "| DELETE | /students/{id} | Delete a student | none | DeleteResponse |\n" +
-            "<!-- docsync:end api-routes -->\n";
-        String contract = "# Student Contract Documentation\n\n" +
-            "<!-- docsync:begin api-contract sources=src/main/java/org/example/model/Student.java -->\n" +
-            "## Student model\n\n" +
-            "| Field | Type | Notes |\n" +
-            "| --- | --- | --- |\n" +
-            "| id | String | Unique identifier |\n" +
-            "| name | String | Student name |\n" +
-            "| email | String | Valid email address |\n" +
-            "| department | String | Department name |\n" +
-            "| status | String | active/inactive state |\n" +
-            "<!-- docsync:end api-contract -->\n";
-        Files.createDirectories(project.resolve("docs/api"));
-        Files.writeString(project.resolve("docs/api/endpoints.md"), endpoints, StandardCharsets.UTF_8);
-        Files.writeString(project.resolve("docs/api/student-contract.md"), contract, StandardCharsets.UTF_8);
-    }
-
-    private static void ensureDirectories(Path project) throws IOException {
-        Files.createDirectories(project.resolve("docs/reports"));
-        Files.createDirectories(project.resolve("docs/ui"));
-        Files.createDirectories(project.resolve("docs/backend"));
-        Files.createDirectories(project.resolve("docs/api"));
+    private static void writeReport(Path report, String content) throws IOException {
+        Files.createDirectories(report.getParent());
+        Files.writeString(report, content, StandardCharsets.UTF_8);
     }
 }

@@ -78,11 +78,18 @@ public class StudentApiServer {
 
     private static void createStudent(HttpExchange exchange) throws IOException {
         Map<String, String> params = readForm(exchange);
-        Student student = SERVICE.createStudent(
-            params.getOrDefault("name", ""),
-            params.getOrDefault("email", ""),
-            params.getOrDefault("department", "")
-        );
+        Student student;
+        try {
+            student = SERVICE.createStudent(
+                params.getOrDefault("name", ""),
+                params.getOrDefault("email", ""),
+                params.getOrDefault("department", ""),
+                params.getOrDefault("phone", "")
+            );
+        } catch (IllegalArgumentException e) {
+            sendJson(exchange, 400, "{\"error\":\"Invalid student input\"}");
+            return;
+        }
         sendJson(exchange, 201, student.toString());
     }
 

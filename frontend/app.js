@@ -12,6 +12,11 @@ const validationRules = {
   studentDepartment: {
     required: true,
     message: 'Department is required.'
+  },
+  studentPhone: {
+    required: false,
+    pattern: /^(?=.{7,20}$)\+?[0-9 -]+$/,
+    message: 'Phone must contain 7 to 20 digits, spaces or hyphens, with an optional leading +.'
   }
 };
 
@@ -21,6 +26,9 @@ function validateStudentForm(fields) {
     const value = String(fields[fieldName] ?? '').trim();
     if (rule.required && !value) {
       errors[fieldName] = rule.message;
+      continue;
+    }
+    if (!value && !rule.required) {
       continue;
     }
     if (rule.minLength && value.length < rule.minLength) {
@@ -47,7 +55,8 @@ async function submitStudentForm(event) {
   const payload = new URLSearchParams({
     name: formData.studentName,
     email: formData.studentEmail,
-    department: formData.studentDepartment
+    department: formData.studentDepartment,
+    phone: formData.studentPhone
   });
 
   try {

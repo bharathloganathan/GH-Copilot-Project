@@ -1,7 +1,11 @@
 # API Route Documentation
 
 <!-- docsync:begin api-routes sources=src/main/java/org/example/api/StudentApiServer.java -->
-Routes: GET /students, POST /students, GET /students/{id}, DELETE /students/{id}.
+## Declared routes
+
+Source: `src/main/java/org/example/api/StudentApiServer.java`
+
+These are declarations in `routes()`, not validation of HTTP dispatch.
 
 | Method | Path | Summary | Request Type | Response Type |
 | --- | --- | --- | --- | --- |

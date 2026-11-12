@@ -1,9 +1,12 @@
 # Code Review
 
-## Summary
-The implementation is intentionally small and focused on the automated documentation synchronization problem. The design keeps the doc-sync engine separate from domain behavior and provides deterministic output.
+## Status
+This is a record of known gaps, not a completed independent security review.
 
-## Findings
-- No critical security issues found in the demo app. The API handles user input through minimal validation and does not emit secrets.
-- The code is maintainable because it has small classes and explicit route definitions.
-- The only notable limitation is that the Java HTTP server uses an in-memory repository rather than MySQL, which is acceptable for a demo.
+## Open findings
+- UI sync is source-derived but does not yet use Git impact analysis.
+- Backend and API synchronization and full verification are not implemented.
+- The demo API returns Java record strings while advertising JSON, and uses an
+  in-memory repository rather than MySQL.
+- The earlier statement that no critical security issues were found was not
+  supported by a comprehensive security review.
