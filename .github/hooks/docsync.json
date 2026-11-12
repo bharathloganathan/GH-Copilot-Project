@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "powershell": "./.github/hooks/session-start.ps1",
+        "bash": "echo 'DocSync: run DocSyncCli analyze/sync/verify; hooks are supplementary.'",
+        "cwd": ".",
+        "timeoutSec": 20
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "powershell": "./.github/hooks/pre-tool-use.ps1",
+        "cwd": ".",
+        "timeoutSec": 10
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "powershell": "./.github/hooks/post-tool-use.ps1",
+        "cwd": ".",
+        "timeoutSec": 10
+      }
+    ]
+  }
+}

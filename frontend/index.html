@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Management</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Student Management</h1>
+      <form id="student-form">
+        <label for="studentName">Student name</label>
+        <input id="studentName" name="studentName" type="text" required />
+
+        <label for="studentEmail">Email</label>
+        <input id="studentEmail" name="studentEmail" type="email" required />
+
+        <label for="studentDepartment">Department</label>
+        <select id="studentDepartment" name="studentDepartment" required>
+          <option value="">Select department</option>
+          <option value="Computer Science">Computer Science</option>
+          <option value="Mathematics">Mathematics</option>
+        </select>
+
+        <button type="submit">Add student</button>
+      </form>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
