@@ -4,10 +4,10 @@
 
 UI blocks, StudentService public methods and digest, declared routes, Student record fields, and literal create-request form parameters were compared against source. Manual text was preserved.
 
-- `docs/ui/student-ui.md`: updated
-- `docs/backend/student-service.md`: updated
+- `docs/ui/student-ui.md`: already current
+- `docs/backend/student-service.md`: already current
 - `docs/api/endpoints.md`: already current
-- `docs/api/student-contract.md`: updated
+- `docs/api/student-contract.md`: already current
 
 ## Limitations and approval
 
