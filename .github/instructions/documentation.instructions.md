@@ -7,12 +7,13 @@ applyTo: "docs/**/*.md,README.md"
 ## Naming conventions
 - File names are lowercase kebab-case: `student-service.md`, `student-contract.md`, `endpoints.md`.
 - Folders: `docs/ui/` (frontend), `docs/backend/` (one file per Java class), `docs/api/` (endpoints and contracts), `docs/reports/` (generated reports).
-- Top-level SDLC documents keep fixed names: `requirements.md`, `architecture.md`, `design-review.md`, `impl-plan.md`, `code-review.md`, `test-report.md`, `changelog.md`.
+- The final agent-authored end-to-end SDLC report is `docs/sdlc-report.md`. Agent phases provide structured handoffs; do not create one Markdown file per agent or phase. Existing `requirements.md`, `architecture.md`, `design-review.md`, `impl-plan.md`, `code-review.md`, `test-report.md`, `changelog.md`, and `pr-description.md` are existing reference material, not outputs for new workflow runs unless requested.
+- DocSync-generated product documentation in `docs/ui/`, `docs/backend/`, `docs/api/`, plus engine reports in `docs/reports/`, are separate functional outputs and must continue to be generated/updated as required.
 
 ## Source-code traceability
 - Every generated block declares its sources: `<!-- docsync:begin <block-id> sources=<path>[,<path>] -->`.
 - Source paths are repo-relative with forward slashes. Each generated section also shows a `Source:` line.
-- Requirement IDs (`US-001`, `AC-n`) are referenced in SDLC documents to maintain requirement traceability.
+- Requirement IDs (`US-001`, `AC-n`) are referenced in the final `docs/sdlc-report.md` to maintain requirement traceability.
 
 ## Documentation synchronization
 - Only content between `docsync:begin` and `docsync:end` markers is machine-managed; edit it only through `DocSyncCli sync`.
@@ -28,4 +29,4 @@ applyTo: "docs/**/*.md,README.md"
 ## Validation
 - After synchronizing, run `DocSyncCli verify`; it must report no MISSING, STALE or OUTDATED items before approval.
 - A block is STALE when it differs from what the source currently produces.
-- Record validation results in `docs/reports/verify-report.md` and `docs/test-report.md`.
+- The CLI writes validation results to `docs/reports/verify-report.md`. Return executed test results to the orchestrator for the final `docs/sdlc-report.md`.

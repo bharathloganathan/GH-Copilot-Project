@@ -9,8 +9,8 @@ implemented (in-memory repository).
 ## Key directories
 - `frontend/` — UI files
 - `src/main/java/` — backend and docsync engine
-- `docs/` — generated and manual SDLC documentation
-- `.github/` — custom agents, prompts, instructions, skills, and hooks
+- `docs/` — generated product documentation, reports, legacy references, and the final consolidated `sdlc-report.md` produced after a complete agent workflow
+- `.github/` — eight custom agents, project and role-specific instructions, one consolidated documentation-sync skill, prompts, and hooks
 
 ## Build and run
 Use the Java compiler directly if Maven is unavailable in the environment:

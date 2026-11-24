@@ -1,50 +1,67 @@
 # Copilot Instructions — Automated Documentation Synchronization
 
-## Project overview
-A simple **Student Management System** (demo app) plus a **DocSync engine** (`org.example.docsync`) that keeps
-technical documentation in `docs/` synchronized with source code. The engine is the priority; the demo app only
-exists to be changed and documented. Story: **US-001 Automated Documentation Synchronization**.
+## Project purpose
+This repository contains the Student Management demo and the higher-priority DocSync engine (`org.example.docsync`). The engine synchronizes selected UI, backend and API documentation from source for **US-001**. It does not currently implement every capability described in the original target architecture.
 
-## Technology stack
-- Frontend: HTML, CSS, JavaScript (`frontend/`)
-- Backend: Core Java, Java HTTP Server (`com.sun.net.httpserver`), JDBC + MySQL
-- Build: Maven (`pom.xml`). Version control: Git/GitHub
-- **No** Spring Boot, microservices or extra frameworks. Test with JUnit 5 only.
+## Technology and actual implementation
+- Frontend: plain HTML, CSS and JavaScript in `frontend/`.
+- Backend: Core Java and `com.sun.net.httpserver` in `src/main/java/org/example/`.
+- Build/tests: Maven and JUnit 5.
+- The Student demo currently uses an in-memory repository. MySQL/JDBC persistence is not implemented.
+- Do not add Spring Boot, microservices or unnecessary frameworks.
 
-## Layout
+## Repository map
 | Path | Purpose |
 |---|---|
-| `frontend/` | UI source (`index.html`, `app.js`, `style.css`) |
-| `src/main/java/org/example/{model,repository,service,api,util}` | Demo backend |
-| `src/main/java/org/example/docsync` | Documentation synchronization engine |
-| `docs/` | requirements, architecture, design-review, impl-plan, `ui/`, `backend/`, `api/`, `reports/`, code-review, test-report, changelog |
-| `.github/` | agents, instructions, prompts, skills, hooks |
+| `frontend/` | Student form, validation and styles |
+| `src/main/java/org/example/api/` | HTTP server routes and handlers |
+| `src/main/java/org/example/model/` | Student model |
+| `src/main/java/org/example/repository/` | Demo persistence abstraction |
+| `src/main/java/org/example/service/` | Demo business rules |
+| `src/main/java/org/example/docsync/` | Documentation sync and verification CLI |
+| `src/test/java/` | JUnit 5 tests |
+| `docs/` | Requirements, design, generated docs, reports and release material |
+| `.github/agents/` | Eight concise specialist agent definitions |
+| `.github/instructions/` | Project-wide, path-scoped and agent-role guidance |
+| `.github/skills/documentation-sync/` | The single consolidated documentation sync skill |
 
-## Coding standards
-- Java: small classes, explicit types for public APIs, no unused code, `PreparedStatement` for all SQL.
-- Keep the demo app extractable by the engine: API routes use `route("METHOD", "/path", "summary", status, "RequestType", "ResponseType", handler)`;
-  UI validation lives in the `validationRules` object in `frontend/app.js`; read-only model fields are declared in `READ_ONLY_FIELDS`.
-- Comment only code that needs clarification.
+## Agent workflow outputs
+The eight agents hand off structured findings to the orchestrator; they do not create one Markdown file per phase. After the complete requirements-to-PR workflow and approval gates, the orchestrator creates the single consolidated `docs/sdlc-report.md` containing the full lifecycle, traceability, evidence, limitations, approvals and PR material. Existing standalone SDLC documents are reference material unless the user asks to migrate them. This consolidation does not replace DocSync's product docs in `docs/ui/`, `docs/backend/`, `docs/api/` or its required sync/verify reports.
 
-## Architecture rules
-- Pipeline: change detection → classification → impact analysis → doc update → validation → report → human approval.
-- Source code is the implementation source of truth. Docs never drive code.
-- Generated doc content lives only inside `<!-- docsync:begin ... -->` / `<!-- docsync:end ... -->` blocks; everything outside is manual and must be preserved.
+## Project instructions
+Follow the applicable scoped instructions:
+- `java.instructions.md` for Java production source.
+- `frontend.instructions.md` for frontend source.
+- `docsync.instructions.md` for the synchronization engine.
+- `testing.instructions.md` for tests.
+- `documentation.instructions.md` for Markdown docs.
+- `agent-workflows.instructions.md` for detailed responsibilities of each custom agent.
 
-## Agent collaboration rules
-- The **orchestrator** coordinates; specialist agents own distinct outputs (see `.github/agents/`). No agent edits another agent's deliverable.
-- Hand off through the documents in `docs/`; record each phase and approval in the orchestrator's progress notes.
-- Human approval is required after requirements, architecture, plan, and before any commit/merge.
+## Current DocSync capabilities
+The CLI supports only:
+```text
+java -cp target/classes org.example.docsync.DocSyncCli sync --root .
+java -cp target/classes org.example.docsync.DocSyncCli verify --root .
+```
+Current mappings cover `frontend/index.html`, `frontend/app.js`, `StudentService.java`, `StudentApiServer.java`, and `Student.java`, writing to four mapped docs under `docs/ui/`, `docs/backend/` and `docs/api/`.
 
-## Documentation synchronization principles
-1. Detect changes with Git diff (or the engine's baseline fallback) — never assume hooks see every edit.
-2. Update only documentation impacted by changed sources; never touch unrelated docs.
-3. Never invent functionality; every documented fact traces to a source file.
-4. Validate docs against source after every sync (`verify`), and report failures.
-5. Produce `docs/reports/sync-report.md` for every sync.
+The current engine does **not** implement Git-based impact analysis, an `analyze` command, `--dry-run`, a baseline fallback, general Java class documentation, or full HTTP dispatch/response serialization verification. Do not claim these capabilities unless they are implemented and tested.
 
-## Security requirements
-- No secrets in source or docs; DB credentials come from environment variables (`DB_URL`, `DB_USER`, `DB_PASSWORD`).
-- Validate and bound all request input; return generic errors; parameterized SQL only; prevent path traversal when serving static files.
-- Never commit, push, merge, deploy, or run destructive commands without explicit human authorization (enforced in part by `pre-tool-use.ps1`).
-- Do not claim tests passed without execution evidence recorded in `docs/test-report.md`.
+## Source and documentation rules
+- Source is authoritative; never invent behavior based on plans or docs.
+- Generated text is limited to matching `<!-- docsync:begin ... -->` / `<!-- docsync:end ... -->` blocks. Update it through the CLI; preserve everything outside the markers.
+- Run `sync`, inspect its diff/report, then run `verify`. Report failures and limits accurately.
+- Do not touch unrelated documentation. Do not delete docs for removed source without human approval.
+- Do not say that custom agents or tests ran unless execution evidence exists.
+
+## Agent and approval rules
+- Keep each `.agent.md` concise; put detailed agent responsibilities in `agent-workflows.instructions.md`.
+- Each agent requests `GPT-6.1 Terra`. The Copilot host/account must offer that model; otherwise the host may require selecting an available model.
+- The orchestrator delegates distinct outputs and stops at human approval gates. Specialist agents do not edit another specialist's deliverables.
+- Never commit, push, merge, deploy, approve, or perform destructive actions without the user's explicit authorization.
+
+## Security and quality
+- Never put credentials, tokens or personal secrets in source or docs.
+- Validate and bound request input; return generic client-facing errors; use parameterized SQL if SQL is introduced.
+- Keep static file serving constrained to intended files.
+- Add focused JUnit 5 tests for behavior and failure conditions. Return only actually executed test results to the orchestrator for inclusion in the final `docs/sdlc-report.md`.

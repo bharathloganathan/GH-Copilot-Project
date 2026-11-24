@@ -5,10 +5,10 @@ agent: documentation-sync
 
 Synchronize documentation with the current source changes.
 
-1. Use the `git-change-analysis` skill to list changed files (Git diff; baseline fallback if Git is unavailable).
-2. Use `documentation-impact-analysis` to classify each change as **UI**, **BACKEND** or **API** and map it to docs.
-3. Run `java -cp target/classes org.example.docsync.DocSyncCli sync --root .` (use `--dry-run` first if unsure).
-4. Apply `ui-`, `backend-`, `api-documentation-sync` skills for any needed manual-notes follow-up (outside generated blocks only).
-5. Run `documentation-validation`, then show `docs/reports/sync-report.md`.
+1. Follow `.github/skills/documentation-sync/SKILL.md`.
+2. Inspect Git changes if available, but accurately state that the current engine performs a full mapped-source scan rather than Git-based impact analysis.
+3. Run `java -cp target/classes org.example.docsync.DocSyncCli sync --root .`.
+4. Run `java -cp target/classes org.example.docsync.DocSyncCli verify --root .`.
+5. Review the generated diff and reports, and state actual results and unsupported scope.
 
-Do not touch unrelated docs. Do not commit; wait for my approval.
+The CLI does not implement `analyze` or `--dry-run`. Do not touch unrelated docs. Do not commit; wait for my approval.

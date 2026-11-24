@@ -6,6 +6,7 @@ agent: quality-review
 Verify documentation against source.
 
 1. Run `java -cp target/classes org.example.docsync.DocSyncCli verify --root .`.
-2. Use the `documentation-validation` skill to inspect each MISSING / STALE / OUTDATED item.
-3. Report results in a table (doc, block, status, source). Write `docs/reports/verify-report.md` (the CLI does this).
-4. Do not fix anything; recommend running `/sync-docs` for stale items and ask before deleting outdated docs.
+2. Follow the verification section in `.github/skills/documentation-sync/SKILL.md`.
+3. Report exact mapped docs and blocks that are stale, plus the CLI's actual supported scope. The current verifier does not classify generic MISSING or OUTDATED sources.
+4. The CLI writes `docs/reports/verify-report.md`. Do not claim it checked manual prose, HTTP dispatch or unmapped docs.
+5. Do not fix anything; recommend running `/sync-docs` for stale generated blocks and ask before deleting docs.
