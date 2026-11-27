@@ -73,7 +73,67 @@ public class StudentApiServer {
     }
 
     private static void listStudents(HttpExchange exchange) throws IOException {
-        sendJson(exchange, 200, SERVICE.getStudents().toString());
+        sendJson(exchange, 200, studentsAsJson(SERVICE.getStudents()));
+    }
+
+    private static String studentsAsJson(List<Student> students) {
+        StringBuilder json = new StringBuilder("[");
+        for (int index = 0; index < students.size(); index++) {
+            if (index > 0) {
+                json.append(',');
+            }
+            Student student = students.get(index);
+            json.append('{');
+            appendJsonField(json, "id", student.id());
+            json.append(',');
+            appendJsonField(json, "name", student.name());
+            json.append(',');
+            appendJsonField(json, "email", student.email());
+            json.append(',');
+            appendJsonField(json, "department", student.department());
+            json.append(',');
+            appendJsonField(json, "phone", student.phone());
+            json.append(',');
+            appendJsonField(json, "status", student.status());
+            json.append('}');
+        }
+        return json.append(']').toString();
+    }
+
+    private static void appendJsonField(StringBuilder json, String name, String value) {
+        appendJsonString(json, name);
+        json.append(':');
+        if (value == null) {
+            json.append("null");
+        } else {
+            appendJsonString(json, value);
+        }
+    }
+
+    private static void appendJsonString(StringBuilder json, String value) {
+        json.append('"');
+        for (int index = 0; index < value.length(); index++) {
+            char character = value.charAt(index);
+            switch (character) {
+                case '"' -> json.append("\\\"");
+                case '\\' -> json.append("\\\\");
+                case '\b' -> json.append("\\b");
+                case '\f' -> json.append("\\f");
+                case '\n' -> json.append("\\n");
+                case '\r' -> json.append("\\r");
+                case '\t' -> json.append("\\t");
+                default -> {
+                    if (character < 0x20) {
+                        json.append("\\u00");
+                        json.append(Character.forDigit((character >> 4) & 0xF, 16));
+                        json.append(Character.forDigit(character & 0xF, 16));
+                    } else {
+                        json.append(character);
+                    }
+                }
+            }
+        }
+        json.append('"');
     }
 
     private static void createStudent(HttpExchange exchange) throws IOException {

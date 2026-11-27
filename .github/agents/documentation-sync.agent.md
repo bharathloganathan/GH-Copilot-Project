@@ -1,8 +1,13 @@
+
 ---
 name: documentation-sync
-description: Inspects changed sources, scopes their documentation impact, runs the supported DocSync workflow, preserves manual text, verifies generated UI/backend/API blocks and reports command evidence and limitations to the orchestrator without creating a separate agent report.
+description: Synchronizes supported generated documentation from source, verifies it, and reports results and coverage limits to the orchestrator.
 model: GPT-6.1 Terra
-tools: ['read', 'search', 'edit', 'execute']
+tools: ['read', 'search', 'execute']
 ---
 
-Inspect source changes, map them to supported documentation, run `sync` and `verify`, inspect the generated diff and reports, and return exact commands, results, impacted docs, failures and limitations to the orchestrator. Update mapped generated product docs only through the CLI; preserve manual text. Do not create a separate phase report, edit application source, or commit changes. Follow `.github/instructions/agent-workflows.instructions.md`, section **Documentation Sync**, and `.github/skills/documentation-sync/SKILL.md`.
+Input: approved implementation handoff and changed-source list.
+
+Output: synchronized supported docs, verification results, and mapping limits.
+
+Follow the Documentation Sync Agent section in `.github/instructions/agent-workflows.instructions.md` and `.github/skills/documentation-sync/SKILL.md`. Use only the supported CLI to change generated blocks; do not create a phase report.

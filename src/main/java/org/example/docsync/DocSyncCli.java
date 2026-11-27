@@ -64,15 +64,18 @@ public final class DocSyncCli {
             verify(root);
             writeReport(report, "# Documentation Synchronization Report\n\n"
                     + "## Status: Synchronized within supported scope\n\n"
-                    + "UI blocks, StudentService public methods and digest, declared routes, "
-                    + "Student record fields, and literal create-request form parameters were compared "
-                    + "against source. Manual text was preserved.\n\n"
+                    + "UI fields, validation, registered-students table headers, StudentService public "
+                    + "methods and digest, declared routes, Student record fields, literal create-request "
+                    + "form parameters, and the source-derived `GET /students` response contract were "
+                    + "compared against source. Manual text was preserved.\n\n"
                     + String.join("\n", actions) + "\n\n"
                     + "## Limitations and approval\n\n"
                     + "Explicit source scan, not Git impact analysis. Only the four mapped documents "
                     + "are supported; unchanged documents are not rewritten. Route declarations are "
                     + "separate from HTTP dispatch. Model fields are not proof of wire-format behavior. "
-                    + "Business-logic meaning requires human review. No commit or merge was performed.\n");
+                    + "The extracted GET response contract describes source structure only; live HTTP "
+                    + "behavior is not verified. Business-logic meaning requires human review. "
+                    + "No commit or merge was performed.\n");
             System.out.println("UI, backend and API documentation synchronized within supported scope.");
         } catch (IOException | IllegalArgumentException e) {
             try {
@@ -109,9 +112,13 @@ public final class DocSyncCli {
                 throw new IOException("STALE: " + String.join(", ", stale));
             }
             writeReport(report, "# Verification Report\n\n## Result: PASS within supported scope\n\n"
-                    + "The generated UI, StudentService, declared-route, Student-record, and create-request "
-                    + "blocks match current source. Manual content and actual HTTP behavior are not verified. "
-                    + "Other application sources and documents are outside this verifier's scope.\n");
+                    + "The generated UI fields, validation, registered-students table headers, StudentService, "
+                    + "declared-route, Student-record, create-request, and source-derived `GET /students` "
+                    + "response blocks match current source. Manual content is preserved. Route declarations "
+                    + "do not prove HTTP dispatch. Model fields are not proof of wire-format behavior. "
+                    + "The source-derived GET response describes source structure only; live HTTP behavior "
+                    + "is not verified. Other application sources and documents are outside this verifier's "
+                    + "scope.\n");
             System.out.println("Documentation matches source within supported scope.");
         } catch (IOException | IllegalArgumentException e) {
             try {

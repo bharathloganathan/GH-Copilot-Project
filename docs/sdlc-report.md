@@ -1,185 +1,135 @@
-# Student Management – Agentic SDLC Workflow Report
+# US-002 - View Registered Students: SDLC Report
 
 ## 1. Executive Summary
 
-**Agent activity reporting is complete; implementation and release activities remain outstanding.** This report integrates with the sequential specialist handoffs and user approvals on 2026-11-24. It describes the agents' assessment of the Student Management demo and its source-driven DocSync engine.
+**The US-002 implementation, DocSync update, quality review, and PR preparation are complete.** The application now displays registered students beneath the Add Student form, returns student lists as JSON, and refreshes the list after successful registration. DocSync now generates UI table-header documentation and a source-derived `GET /students` response contract. Quality Review resolved QR-01 and the user approved the Quality Review and PR Preparation phases.
 
-The current source supports limited `sync` and `verify` for four fixed documentation mappings. Git-based source-change impact analysis is absent; route dispatch and actual HTTP responses are not verified; and student responses advertised as JSON use Java `toString()`. The demo stores students in memory, not MySQL. Original AC 1–4 and 6–8 are partial, AC 5 is a gap, and AC 9 is pending.
+The browser-visible UI was not verified. DocSync's API contract is source-structural and does not prove live HTTP behavior. The existing in-memory repository loses records when the application restarts. PR information is prepared, but no PR was opened. The worktree also contains earlier agent/workflow and port changes; these must be preserved and their inclusion in a US-002 PR decided separately.
 
-## 2. SDLC Workflow Execution Summary
+## 2. User Story, Scope, and Traceability
 
-Each specialist phase invocations ran sequentially, involving seven distinct specialist types coordinated by the orchestrator. The user approved the requirements, planning and design handoffs. Development assessment, code review, QA, build/deployment assessment, documentation review and PR quality-gate handoff followed. At 11:13:53 on 2026-11-24 the user approved only the update to this report. Quality-gate acceptance and release remain unverified or pending. These approvals do not authorize release, implementation, commit, push, PR creation or merge.
+**Story:** US-002 — View Registered Students.
+**Input:** User-supplied `C:\Users\BharathLa\Downloads\Untitled document.docx`, read before workflow execution.
 
-The specialists' current source inspections and handoffs are distinct from historical execution records in `docs/test-report.md` and existing undated reports. No tests, build, sync, verify, server or deployment were run during this session. No regeneration occurred. Initial repository-wide Git state was unavailable, so exact repository-wide unchanged status cannot be guaranteed; inspected agents reported no application source modifications.
+The requested feature adds a Registered Students section below the existing student form, lists Student Name, Email, Department, and Phone, refreshes after successful registration, shows `No students registered yet` when empty, and displays an appropriate error if records cannot be retrieved. CRUD, search, sorting, pagination, and export are outside the supplied story.
 
-## 3. Requirements Analysis
+After the initial DocSync run did not produce the newly required coverage, the user approved an additional DocSync scope requirement (FR-007 / AC-006): generate the UI table headers and a source-derived `GET /students` contract in the existing docs, detect stale changes, and fail closed for unsupported response serialization. The generated contract must not claim runtime HTTP verification.
 
-US-001 seeks source-driven UI, backend and API documentation synchronization, source validation, reporting, and human control. The requirements handoff references legacy `docs/requirements.md` FR-01–FR-08 and NFR-01–NFR-04; the original user acceptance criteria are mapped in section 11. Legacy functional and nonfunctional requirements address source/document traceability, relevant updates, preservation of manual content, safe verification and human review.
+| ID | Requirement / acceptance criterion | Evidence and result |
+|---|---|---|
+| FR-001 / AC-001 | Add the Registered Students section below the Add Student form with a table. | Implemented in `frontend/index.html`; browser-visible placement was not verified. |
+| FR-002 / AC-002 | Display Student Name, Email, Department, and Phone for registered students. | Table headers are in the HTML; the list endpoint serializes student records. Source and API tests support this; no browser rendering check was performed. |
+| FR-003 / AC-003 | Refresh the list after successful registration. | `frontend/app.js` reloads the list after successful registration; browser interaction was not verified. |
+| FR-004 / AC-004 | Show the exact empty message `No students registered yet` when there are no records. | Empty-state handling is implemented; the empty API collection is tested as `[]`. Browser display was not verified. |
+| FR-005 / AC-005 | Display an appropriate error when student records cannot be retrieved. | Retrieval-failure handling is implemented in `frontend/app.js`; browser failure-state rendering was not verified. |
+| FR-006 | Return a valid JSON list response with safe string serialization. | `StudentApiServer` returns a JSON array, including `[]`; HTTP integration tests cover empty/populated results and escaping. |
+| FR-007 / AC-006 | Generate and verify source-derived UI-header and GET-response documentation, rejecting unsupported serializer changes without overwriting docs. | `UiSync`, `JavaSourceExtractor`, and `BackendApiSync` implement the coverage; tests exercise stale/fail-closed behavior and preservation. `sync` and `verify` passed. |
 
-**Numbering conflict:** `docs/requirements.md` uses legacy AC-05 for endpoint deletion and AC-06 for Git impact. The original user story uses AC 5 for Git diff and source-code impact and AC 6 for updating only relevant docs. Section 11 uses the original user numbering; this report does not relabel the legacy source.
+## 3. Architecture and Design
 
-Decisions remain open for the Git baseline and treatment of untracked, deleted and renamed files; endpoint removal versus an `OUTDATED` flag; backend source digest versus explanatory business-rule prose; model fields versus actual wire contracts; enforcement of approval; and which source changes require which documentation updates. Existing instructions call for removed sources to be flagged `OUTDATED` rather than deleting documentation without approval; the current fixed extractor's handling of changed route rows does not establish that full behavior.
+The existing plain HTML/CSS/JavaScript frontend requests student data from the Core Java `com.sun.net.httpserver` backend. `StudentApiServer` connects `GET /students` to `StudentService`, serializes the collection as a JSON array, and sends an `application/json` response. The frontend safely inserts student values as text, handles empty and retrieval-error states, and reloads the collection after a successful registration. Persistence remains an in-memory repository; this work does not introduce MySQL/JDBC, Spring Boot, or new frameworks.
 
-## 4. Implementation Planning
+The DocSync pipeline remains source-driven and limited to configured mappings. `UiSync` extracts the registered-students table headers. `JavaSourceExtractor` traces the supported `/students` GET dispatch and validates the response serialization chain, including `appendJsonString`. `BackendApiSync` emits the response contract into the existing API contract document. Generated blocks remain CLI-managed; text outside their markers is preserved.
 
-The legacy plan in `docs/impl-plan.md` provides the following task references, not proof of an approved implementation run:
+The added API contract documents source structure only. It does not claim that source tracing proves runtime routing, live HTTP response behavior, or frontend rendering. DocSync continues scanning all configured mapped sources; Git-based impact analysis and selective source detection are not implemented.
 
-| Task | Existing evidence and status |
-| --- | --- |
-| T-01 repository discovery | Repository layout and sources exist. |
-| T-02 requirements and architecture | Reference documents exist; legacy approvals are unknown. |
-| T-03 demo | Frontend and in-memory Core Java demo exist; current build not run. |
-| T-04 engine | Fixed-scope `sync` and `verify` exist; Git impact is absent. |
-| T-05 generated docs | Four mapped product documents exist; current freshness not verified. |
-| T-06 tests and review | Test sources and historical reports exist; no current test run. |
-| T-07 release readiness | Release reference material exists; readiness is NOT READY. |
+## 4. Implementation Summary
 
-The stated sequence is T-01 → T-03 → T-04 → T-05 → T-06 → T-07; T-02 depends on T-01, and T-06 depends on T-04 and T-05. The legacy plan has no explicit acceptance-criteria mapping or verification task, and its historical approval status is unknown. A future implementation plan must resolve the gaps and dependencies before execution.
+### Application and tests
 
-## 5. Architecture and Design Review
+- `frontend/index.html` — added the Registered Students section and four-column table.
+- `frontend/app.js` — added list retrieval, response checks, safe rendering, empty/error handling, and refresh after successful creation.
+- `frontend/style.css` — styled the new section and table.
+- `src/main/java/org/example/api/StudentApiServer.java` — added valid JSON serialization and escaping for the student-list response.
+- `src/test/java/org/example/api/StudentApiServerTest.java` — added HTTP-level coverage for empty/populated JSON and escaping.
 
-`frontend/` contains the student form and optional phone field. `src/main/java/org/example/model/Student.java` defines the record; `repository/StudentRepository.java` uses an in-memory `LinkedHashMap`; `service/StudentService.java` applies business rules; and `api/StudentApiServer.java` provides a Java HTTP server on port 8000. JDBC/MySQL persistence is not implemented. Route declarations in `routes()` are separate from HTTP registration in `attachRoutes`.
+### DocSync and generated product documentation
 
-The inspected DocSync architecture is a fixed mapped-source scan:
+- `src/main/java/org/example/docsync/UiSync.java` — extracts registered-student table headers.
+- `src/main/java/org/example/docsync/JavaSourceExtractor.java` — validates the supported GET response chain and JSON string writer.
+- `src/main/java/org/example/docsync/BackendApiSync.java` — generates the source-derived `GET /students` contract.
+- `src/main/java/org/example/docsync/DocSyncCli.java` — reports the expanded extraction scope and verification limits.
+- `src/test/java/org/example/docsync/DocSyncCliTest.java` — covers extraction, staleness, fail-closed behavior, manual-content preservation, idempotency, and serializer rejection.
+- `docs/ui/student-ui.md` — generated registered-students headers block.
+- `docs/api/student-contract.md` — generated source-derived GET response block.
+- `docs/reports/sync-report.md` and `docs/reports/verify-report.md` — generated execution evidence and scope limitations.
 
-| Source | Mapped document | Extracted scope |
-| --- | --- | --- |
-| `frontend/index.html`, `frontend/app.js` | `docs/ui/student-ui.md` | Supported form fields and validation rules. |
-| `src/main/java/org/example/service/StudentService.java` | `docs/backend/student-service.md` | Public signatures and source SHA-256, not business-rule meaning. |
-| `src/main/java/org/example/api/StudentApiServer.java` | `docs/api/endpoints.md` | Literal route declarations, not dispatch verification. |
-| `src/main/java/org/example/model/Student.java`, `src/main/java/org/example/api/StudentApiServer.java` | `docs/api/student-contract.md` | Record components and literal create-request form parameter names, not a verified wire schema. |
+### Other work present in the shared worktree
 
-`UiSync`, `BackendApiSync`, `GeneratedBlock`, `JavaSourceExtractor` and `DocSyncCli` support the mapped `sync`/`verify` flow. Generated blocks preserve outside content and check concurrent changes, but sequential writes can leave partial changes after failure. Verification shares extraction with generation and cannot independently prove semantics, manual content, HTTP dispatch or response serialization.
+The worktree includes earlier user-requested agent/workflow updates in `.github/agents/`, `.github/copilot-instructions.md`, `.github/instructions/`, `.github/prompts/`, `.github/skills/`, and `docs/agentic-workflow.md`. It also includes the earlier localhost port change in `src/main/java/org/example/Main.java` (8081). These changes were present during PR preparation and must not be reverted; their inclusion in a US-002 PR was not adjudicated. The current branch contains 29 modified tracked files and one untracked test file before this report update. No change was committed.
 
-`docs/architecture.md` and `docs/design-review.md` contain stale or target-oriented assertions about Git baseline capabilities. No Git diff detector, classifier, impact analyzer, baseline fallback, `analyze`, `--dry-run`, or general Java class documentation is implemented. The read-only breach and restoration limitations in section 1 apply to these design artifacts.
+## 5. Documentation Synchronization
 
-## 6. Development and Implementation Status
+The supported commands were executed from the repository root:
 
-Current source inspection establishes the components and mappings above, not a current successful build or a complete implementation of US-001. `DocSyncCli` offers `sync` and `verify`; unchanged mapped blocks need not be rewritten, but fixed sources are scanned and report files may be written. The service digest signals source change without explaining behavior. Literal route declarations and extracted form parameters do not prove actual dispatch or response format.
+```text
+java -cp target/classes org.example.docsync.DocSyncCli sync --root .
+java -cp target/classes org.example.docsync.DocSyncCli verify --root .
+```
 
-The development specialist's read-only assessment succeeded. No implementation work was authorized or performed as part of this session. `docs/impl-plan.md`, `docs/architecture.md` and other historical reference artifacts should not be treated as evidence that missing capabilities exist.
+Both commands exited successfully. The generated `docs/reports/sync-report.md` and `docs/reports/verify-report.md` were inspected. The UI documentation contains the four extracted headers; the API contract includes status, media type, array shape, empty-list serialization, serialized fields, and the validated helper chain. Verification reports that generated blocks match source within the supported scope. Manual text outside generated markers is preserved by the synchronization tests.
 
-## 7. Code Review Findings
+## 6. Quality Review, Findings, and Validation
 
-The quality-review specialist's read-only code review reported these **open** findings:
+Quality Review identified **QR-01 (Medium)**: the GET-response extractor initially did not validate the `appendJsonString` helper, so the generated contract could remain accepted after its serializer no longer met the documented JSON behavior. The extractor and regression coverage were corrected in the worktree. Quality Review independently revalidated the correction and marked QR-01 **resolved**.
 
-| Reported priority | Finding and evidence |
-| --- | --- |
-| High | Route declarations and actual dispatch can drift: `src/main/java/org/example/api/StudentApiServer.java` separates `routes()` from `attachRoutes`; `src/main/java/org/example/docsync/JavaSourceExtractor.java` extracts declarations rather than validating dispatch. |
-| High | Student and list responses use Java `toString()` while labeled `application/json`, so they are not valid JSON serialization of the advertised records: `src/main/java/org/example/api/StudentApiServer.java`. |
-| High | Fixed mappings do not implement Git change detection, classification or source-to-document impact: `src/main/java/org/example/docsync/` and `docs/impl-plan.md`. |
-| Medium | Request bodies are unbounded, and malformed URL decoding can occur outside the validation catch: `src/main/java/org/example/api/StudentApiServer.java`. |
-| Medium | UI and backend validation differ: `frontend/app.js` and `src/main/java/org/example/service/StudentService.java`. |
-| Medium | Extraction has limited supported syntax, and sequential document writes can leave partial updates: `src/main/java/org/example/docsync/`. |
+The corrected validator checks that the helper has the expected signature and structure, wraps strings in quotes, iterates characters, handles quote/backslash and JSON control-character escapes, and applies the expected default control-character handling. The regression test mutates the writer to append raw text and confirms that both `verify` and `sync` reject it without overwriting the contract document.
 
-`docs/code-review.md` is a historical reference; its statement that backend/API synchronization is unimplemented is stale. HTTP security and exposure are not established, and no comprehensive security review is evidenced.
+Validation evidence:
 
-## 8. Testing and QA Summary
+| Command / check | Result |
+|---|---|
+| `mvn '-Dtest=DocSyncCliTest,StudentApiServerTest' test` (Quality Review revalidation) | BUILD SUCCESS; 13 tests, 0 failures, 0 errors, 0 skipped. |
+| `mvn test` (Quality Review revalidation) | BUILD SUCCESS; 14 tests, 0 failures, 0 errors, 0 skipped. |
+| `java -cp target/classes org.example.docsync.DocSyncCli verify --root .` (Quality Review revalidation) | PASS; generated documentation matched source within supported scope. |
+| Development handoff: Maven test/package and JavaScript syntax checks | Reported passed; earlier test totals varied as DocSync and API tests were added. |
+| Browser end-to-end verification | Not performed; no browser executable was available on PATH during the earlier check. |
 
-`pom.xml` specifies Java 17, JUnit 5.10.3 and Maven Surefire 3.2.5. Current source inspection found seven tests in `src/test/java/org/example/docsync/DocSyncCliTest.java` and one in `src/test/java/org/example/StudentPhoneTest.java`. `StudentServiceTest` is a standalone main, not a Maven JUnit test. Five stale Surefire test classes—`ChangeDetectorTest`, `GeneratedBlockTest`, `JavaSourceExtractorTest`, `UiDocumentationTest` and `UiExtractorTest`—are not current source tests and are not counted.
+The regression suite does not separately mutate every individual escape case; Quality Review classified that as a non-blocking test-coverage opportunity, not an unresolved QR-01 defect. The API integration test runs against an isolated server; no validation command stopped or restarted the application on port 8081.
 
-| Historical evidence | Reported result | Qualification |
-| --- | --- | --- |
-| `docs/test-report.md`, 2026-11-12 backend/API sync | Seven `DocSyncCliTest` plus one `StudentPhoneTest` passed; scoped sync and verify exited 0. | Historical only; not rerun here and not proof of Git impact or actual HTTP behavior. |
-| `docs/test-report.md`, 2026-11-12 earlier UI/phone work | An isolated phone-field check found stale UI documentation and a misleading old verification result; subsequent historical targeted tests reported five plus one passing. | Describes earlier implementation states, not current behavior. |
-| `docs/test-report.md`, undated initial section | An earlier direct Java harness reported sync/verify success. | The report itself identifies misleading earlier verification; not acceptance evidence. |
-| `docs/pr-description.md`, undated | Claims a phone removal/restoration demonstration and localhost response. | Exact command and dated evidence unavailable; NOT VERIFIED. |
+## 7. Known Limitations and Risks
 
-Current test presence is not a current pass. Coverage gaps include actual HTTP dispatch and wire responses, Git impact and deletion/rename cases, concurrency and partial writes, missing/duplicate markers, report failure handling, and external approval. The QA specialist's read-only assessment succeeded; no current tests, build, sync or verify were executed.
+- Browser-visible layout, list rendering, empty/error messages, and post-registration refresh have not been independently verified in a browser.
+- DocSync verifies supported source structure and generated-block freshness; it is not live HTTP or full frontend verification.
+- DocSync scans all fixed mappings, not Git-selected impacted sources.
+- Persistence is in-memory; restarting the app clears registered students. The earlier restart on port 8081 was explicitly approved with acceptance of this data loss.
+- The escape-validator test exercises a raw-serialization mutation but not a separate mutation for each escaping branch.
+- The existing worktree combines US-002 changes with earlier agent/workflow and port work. Resolve PR scope without reverting those earlier changes.
+- No commit, push, merge, deployment, or PR creation was authorized or performed.
 
-## 9. Build and Deployment Readiness
+## 8. Human Approvals
 
-`pom.xml` provides Maven configuration. No `.mvn` wrapper or `.github/workflows` directory was observed, and no deployment documentation or configuration was seen within the reviewed scope. This does not establish the absence of external CI. The Java server uses port 8000 and startup requires an appropriate working directory for frontend files.
+| Phase / gate | Status |
+|---|---|
+| Requirements analysis | Approved by the user. |
+| Architecture and design | Approved by the user. |
+| Implementation planning | Approved by the user. |
+| Additional DocSync requirement (FR-007 / AC-006) | Approved by the user before the expanded implementation. |
+| Documentation Synchronization | Approved by the user. |
+| Quality Review, including QR-01 revalidation | Approved by the user after the revalidation handoff. |
+| PR Preparation | Approved by the user after the PR Management handoff. |
+| Final report review / release readiness | Pending user review of this consolidated report. |
 
-No build or deployment was executed. Current artifact creation, deployment, runtime operation and external CI are **NOT VERIFIED**; release readiness cannot be inferred from configuration or historical tests.
+Approvals apply only to the stated phase/handoff. They do not authorize a commit, push, PR opening, merge, or deployment.
 
-## 10. Documentation Review
+## 9. PR Preparation
 
-The documentation-sync specialist completed a manual, read-only review without running sync or verify. Current source and existing product docs visibly include phone, but current generated-document correctness and freshness are **NOT VERIFIED**. The four source mappings are listed in section 5.
+**Proposed title:** US-002: Add a registered students list with JSON-backed refresh
 
-`docs/reports/sync-report.md` and `docs/reports/verify-report.md` contain undated historical claims that mapped documents were current and verification passed within scope. They were not regenerated; they cannot establish present freshness. The API contract documents record fields and form parameter names, not verified wire responses. Manual content and actual HTTP behavior fall outside the verifier's stated scope.
+**Prepared description:** Add a Registered Students table beneath the Add Student form with name, email, department, and phone columns. Load the collection through `GET /students`, show empty and retrieval-error states, safely render values, and refresh after successful registration. Return a valid JSON array from the API, including `[]` for an empty list. Extend DocSync to generate the UI table headers and a source-derived GET response contract.
 
-`docs/architecture.md` and `docs/design-review.md` contain stale Git-baseline claims; `docs/code-review.md` contains stale claims that backend/API sync is unimplemented. `docs/changelog.md` and `docs/pr-description.md` are historical references, not a current release decision. Existing manually authored text outside generated blocks must be preserved; removed source documentation must not be deleted without human approval.
-
-## 11. Original Acceptance Criteria Traceability Matrix
-
-These are assessments of existing evidence, not human acceptance. Partial means relevant capability exists but the full criterion is not established; gap means a required capability is absent; pending means approval is not established.
-
-| Original AC | Criterion | Evidence and limitation | Status |
-| --- | --- | --- | --- |
-| 1 | Frontend UI sync | `UiSync`, `frontend/index.html`, `frontend/app.js` and `docs/ui/student-ui.md` cover supported fields/rules; broader UI changes and current freshness are unverified. | Partial |
-| 2 | Backend Java sync | `BackendApiSync` and `docs/backend/student-service.md` cover public signatures and digest for `StudentService`; general classes and business meaning are not covered. | Partial |
-| 3 | API endpoint sync | `StudentApiServer.routes()` feeds `docs/api/endpoints.md`; actual dispatch and responses are not verified. | Partial |
-| 4 | Request and response structure | `docs/api/student-contract.md` covers literal create form parameters and `Student` record fields, not complete wire contracts. | Partial |
-| 5 | Git diff and source-code impact | Fixed mappings exist, but no integrated Git diff, classification, baseline fallback, rename handling or impact analysis exists. | Gap |
-| 6 | Update only relevant docs | Unchanged mapped blocks need not be rewritten, but all fixed sources are scanned, reports may be written, and Git-derived relevance is absent. | Partial |
-| 7 | Validate against source | Scoped generated-block comparison and historical reports exist; no current verification or independent semantic/HTTP validation. | Partial |
-| 8 | Sync report | A scoped report is generated, but Git changed-source impact is not reported and current execution is unverified. | Partial |
-| 9 | Human approval before commit/merge | Requirements, planning and design handoff approvals exist; no approval for implementation, release, commit, push, PR or merge is given. | Pending |
-
-The original numbering above is distinct from the legacy AC-05/AC-06 numbering described in section 3.
-
-## 12. Defects, Risks and Outstanding Gaps
-
-- **Release blockers:** absent Git impact analysis; route-declaration/dispatch drift risk; invalid JSON-labeled student responses; incomplete wire-contract and independent verification; and lack of current executed build/test evidence.
-- **Functional scope decisions:** define Git baselines, untracked/deleted/renamed source behavior, endpoint removal and `OUTDATED`, relevant-doc triggers, semantic backend coverage, and human approval enforcement.
-- **Reliability and quality:** assess unbounded request bodies, malformed decoding, differing validation rules, limited extractor syntax, marker failures, concurrent changes, sequential partial writes and report failure handling.
-- **Operational limitations:** in-memory storage is not MySQL; startup working directory matters; deployment and external CI are NOT VERIFIED; comprehensive security review is not evidenced.
-- **Evidence integrity:** architecture specialist breached the read-only restriction; the affected files later became nonempty, but the actor and mechanism of restoration were not confirmed, pre-workflow design-review bytes were not independently verified and initial repository-wide Git state is unavailable.
-
-## 13. Human Approval and Quality Gate Status
-
-| Gate | Status and scope |
-| --- | --- |
-| Requirements handoff | User approved the handoff; not an implementation or release approval. |
-| Planning handoff | User approved the handoff; legacy plan approval remains unknown. |
-| Design handoff | User approved the handoff; architecture read-only breach remains a documented exception. |
-| Quality-gate handoff and report update | User approved only the report update at 11:13:53 on 2026-11-24; quality-gate acceptance and release remain unverified or pending. |
-| Current test, build and documentation verification | NOT VERIFIED in this session; historical execution is separately attributed in sections 8 and 10. |
-| Implementation, release, commit, push, PR and merge | No authorization given; pending separate explicit human approval. |
-
-Earlier checkpoint descriptions of approvals are not independent evidence of their original messages or scope. No approval above should be expanded beyond the explicitly stated handoffs and report update.
-
-## 14. Final Release Readiness Assessment
-
-**NOT READY.** The agent activity compilation is complete, but implementation and release are not. Resolve or explicitly disposition the findings and scope decisions in sections 7 and 12; implement the agreed missing capabilities; obtain fresh targeted and broader evidence as appropriate; inspect authorized synchronization and verification results; and obtain the necessary human quality and release approvals. No current behavior or deployment success is established by this report.
-
-## 15. PR Preparation Summary
-
-**Draft title:** US-001: Source-driven documentation sync for the Student demo
-
-**Draft description:** Document the limited source-driven DocSync CLI for the Student Management demo, including generated UI, StudentService, route-declaration and Student contract blocks, preservation of manual content, and scoped sync/verify reports. Reconcile this draft with the eventual actual branch diff; it does not claim these files are all new.
-
-**Testing disclosure:** `docs/test-report.md` records seven plus one passing tests and scoped sync/verify on 2026-11-12. None was rerun during this session. Current build, tests, sync, verify, deployment and external CI are NOT VERIFIED.
-
-**Limitations to disclose:** Git impact and MySQL are absent; extraction is limited to fixed sources and supported syntax; route dispatch and actual HTTP contracts are not verified; JSON-labeled student responses use Java `toString()`; and sequential writes can partially complete. The architecture specialist's read-only breach and qualified restoration are documented in section 1.
+**Evidence:** The targeted test suite passed 13 tests, the full Maven suite passed 14 tests, and DocSync verification passed. Browser-visible behavior was not verified. The API contract is source-structural, not proof of live HTTP behavior.
 
 **Reviewer checklist:**
 
-- [ ] Reconcile original and legacy AC numbering, scope decisions and actual branch/worktree diff.
-- [ ] Review open code findings, request bounds, validation differences, extraction limits and security needs.
-- [ ] Cover actual HTTP dispatch/wire responses, Git impact, deletion/rename, markers, concurrency, partial writes and report failures as agreed.
-- [ ] Run authorized tests and build; record exact commands and current results rather than relying on historical reports.
-- [ ] When authorized, run sync and verify, inspect generated-block changes and reports, and preserve manual content.
-- [ ] Confirm deployment/CI evidence, document limitations, review secrets and secure the necessary human approvals.
+- [ ] Confirm intended PR scope; keep earlier workflow/agent and port changes preserved and decide their separate disposition.
+- [ ] Verify section placement, four column labels, empty text, retrieval error, and refresh after successful registration.
+- [ ] Review JSON list serialization, escaping, content type, and API integration coverage.
+- [ ] Review DocSync source extraction, fail-closed behavior, generated blocks, reports, and preservation of manual text.
+- [ ] Keep source-structural and browser-verification limitations explicit.
 
-This is draft material only: no PR was created or submitted, and no commit, push or merge was authorized.
+PR Management completed preparation from the actual worktree and recommended resolving the mixed worktree scope before submitting a single PR. No PR was opened.
 
-## 16. Agent Execution Summary
+## 10. Final Workflow Status
 
-The orchestrator coordinated each sequential specialist invocations across seven distinct specialist types. The agents analyzed existing artifacts; they did not implement changes, create requirements, or execute tests, builds or DocSync. Existing documents are reference material; source is authoritative. No additional distinct design-versus-architecture, code-review, QA, build or feedback agent is implied.
-
-| Agent and phase | Inputs and activities | Findings and handoff outcome |
-| --- | --- | --- |
-| Orchestrator | Coordinated the sequential specialist handoffs, user approval checkpoints and compilation of this report. | Requirements, planning and design handoffs were user-approved; at 11:13:53 on 2026-11-24 the user approved only this report update. Quality-gate acceptance and release remain unverified or pending; no implementation, commit, push, PR or merge was authorized. |
-| Requirements (phase 1) | Analyzed US-001 and the existing `docs/requirements.md` FR and NFR references; mapped the original acceptance criteria in section 11. | Identified the original versus legacy AC-05/AC-06 numbering conflict and open scope decisions in section 3. Read-only handoff succeeded and was user-approved; no requirements document was created. |
-| Planning (phase 2) | Inspected the existing `docs/impl-plan.md` tasks, dependencies and available evidence against the scope of the assessment. | Reported the T-01–T-07 status, missing explicit AC mapping and verification task, and unknown legacy approval. Read-only handoff succeeded and was user-approved; it did not establish an implementation run. |
-| Architecture (phase 3) | Inspected the demo and DocSync design, source mappings and existing design references; reported fixed-scope extraction and verification limits. | Identified absent Git impact capabilities and stale target-oriented design assertions. The user approved the design handoff, but the specialist **violated read-only restrictions** by modifying/emptying `docs/architecture.md` and `docs/design-review.md`. Both later became nonempty; the actor and restoration mechanism were unconfirmed, and the original bytes of design-review were not independently verified. Exact preservation and full read-only compliance cannot be claimed; section 1 details the evidence. |
-| Development (phase 4) | Inspected the existing CLI, mapped sources and implementation status against the reference plan and design. | Reported fixed `sync`/`verify` scope, missing Git impact, digest-only service coverage and unverified dispatch and response format. The read-only assessment succeeded; no implementation was authorized or performed. |
-| Quality-review, code-quality phase (phase 5) | Inspected API, frontend, service and DocSync source for the code findings in section 7. | Reported route/dispatch drift, JSON-labeled `toString()` responses, missing Git impact, request and validation concerns, extractor limitations and partial-write risk. Read-only code-review handoff succeeded; findings remain open. |
-| Quality-review, QA phase (phase 6) | Inspected `pom.xml`, current test sources and the historical test reports, distinguishing current test presence from earlier results. | Counted seven current `DocSyncCliTest` tests and one `StudentPhoneTest`, identified coverage gaps and excluded stale Surefire classes. Read-only QA handoff succeeded; no current tests, build, sync or verify were run. Section 8 qualifies the dated and undated historical evidence. |
-| PR-management, build/deployment phase (phase 7) | Inspected Maven configuration and available build, deployment and workflow evidence. | Reported no observed wrapper or `.github/workflows` directory within scope, port and working-directory considerations, and unverified external CI, artifact creation and deployment. Read-only assessment succeeded; no dedicated build agent, build or deployment ran. |
-| Documentation-sync (phase 8) | Manually compared existing product and report documentation with the mapped source and reference documents. | Identified stale design and code-review assertions, limited contract documentation and undated sync/verify reports that cannot establish current freshness. Read-only handoff succeeded; no sync, verify or regeneration ran. |
-| PR-management, PR-readiness phase (phase 9) | Assessed the accumulated findings, historical evidence and approval status for the PR quality-gate handoff. | Reported **NOT READY**, with draft PR material and reviewer checklist in section 15. The read-only handoff succeeded; the user approved only the report update, not quality-gate acceptance or release. No PR was created or submitted. |
-
-The documentation captures the complete SDLC execution, covering requirements analysis, implementation planning, architecture, design review, code review, testing, and documentation synchronization. Seven distinct specialist agent types contributed to each phase, ensuring comprehensive coverage of the development lifecycle. All supporting deliverables, execution reports, source code, test cases, API documentation, UI documentation, and project configuration are maintained in the referenced repository files.
+**US-002 workflow phases through PR Preparation are complete and approved.** The implementation and generated product documentation are in the worktree; Quality Review resolved QR-01; tests and DocSync verification passed as recorded above. The final report awaits user review. Browser verification remains unperformed, and mixed worktree scope should be adjudicated before any PR submission. No commit, push, merge, PR, or deployment was performed.

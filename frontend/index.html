@@ -28,6 +28,24 @@
 
         <button type="submit">Add student</button>
       </form>
+
+      <section class="students-section" aria-labelledby="registered-students-heading">
+        <h2 id="registered-students-heading">Registered Students</h2>
+        <p id="student-list-status" class="student-list-status" role="status" aria-live="polite">Loading students...</p>
+        <div id="students-table-container" class="students-table-wrapper" hidden>
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Student Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Department</th>
+                <th scope="col">Phone</th>
+              </tr>
+            </thead>
+            <tbody id="registered-students-body"></tbody>
+          </table>
+        </div>
+      </section>
     </main>
     <script src="app.js"></script>
   </body>

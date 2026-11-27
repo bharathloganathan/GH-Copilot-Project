@@ -43,9 +43,9 @@ The CLI supports only:
 java -cp target/classes org.example.docsync.DocSyncCli sync --root .
 java -cp target/classes org.example.docsync.DocSyncCli verify --root .
 ```
-Current mappings cover `frontend/index.html`, `frontend/app.js`, `StudentService.java`, `StudentApiServer.java`, and `Student.java`, writing to four mapped docs under `docs/ui/`, `docs/backend/` and `docs/api/`.
+Current mappings cover `frontend/index.html` form controls and registered-students table headers; `frontend/app.js` validation rules; `StudentService.java` public methods and digest; `StudentApiServer.java` route declarations, create parameters and the source-derived `GET /students` response contract; and `Student.java` record components. They write to four mapped docs under `docs/ui/`, `docs/backend/` and `docs/api/`.
 
-The current engine does **not** implement Git-based impact analysis, an `analyze` command, `--dry-run`, a baseline fallback, general Java class documentation, or full HTTP dispatch/response serialization verification. Do not claim these capabilities unless they are implemented and tested.
+The GET response contract is extracted from the Java source chain; it does not verify live HTTP dispatch or runtime behavior. The current engine does **not** implement Git-based impact analysis, an `analyze` command, `--dry-run`, a baseline fallback, general Java class documentation, or full HTTP dispatch/response verification. Do not claim these capabilities unless they are implemented and tested.
 
 ## Source and documentation rules
 - Source is authoritative; never invent behavior based on plans or docs.

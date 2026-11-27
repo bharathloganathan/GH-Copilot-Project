@@ -13,12 +13,12 @@ applyTo: "docs/**/*.md,README.md"
 ## Source-code traceability
 - Every generated block declares its sources: `<!-- docsync:begin <block-id> sources=<path>[,<path>] -->`.
 - Source paths are repo-relative with forward slashes. Each generated section also shows a `Source:` line.
-- Requirement IDs (`US-001`, `AC-n`) are referenced in the final `docs/sdlc-report.md` to maintain requirement traceability.
+- The supplied user-story ID and acceptance-criteria IDs are referenced in the final `docs/sdlc-report.md` to maintain requirement traceability.
 
 ## Documentation synchronization
 - Only content between `docsync:begin` and `docsync:end` markers is machine-managed; edit it only through `DocSyncCli sync`.
 - Never edit, reformat, or delete text outside markers. Manual notes belong in the `## Manual notes` section.
-- Update only documents mapped to changed sources. Removed sources are flagged `OUTDATED`, not deleted (deletion needs human approval).
+- The current DocSync CLI scans all configured mapped sources during `sync`; do not claim it selectively updates only Git-impacted documents. Report changed-source impact separately from the CLI's actual scan. Removed sources are not automatically deleted; ask for human approval before removing their documentation.
 - Never document behavior that is not present in source.
 
 ## Markdown formatting
@@ -27,6 +27,6 @@ applyTo: "docs/**/*.md,README.md"
 - LF line endings, no trailing whitespace, single blank line between blocks.
 
 ## Validation
-- After synchronizing, run `DocSyncCli verify`; it must report no MISSING, STALE or OUTDATED items before approval.
-- A block is STALE when it differs from what the source currently produces.
+- After synchronizing, run the supported `DocSyncCli verify` and report its actual result. Do not claim it classifies generic MISSING or OUTDATED sources unless that behavior is implemented.
+- A generated block is stale when it differs from what the source currently produces.
 - The CLI writes validation results to `docs/reports/verify-report.md`. Return executed test results to the orchestrator for the final `docs/sdlc-report.md`.

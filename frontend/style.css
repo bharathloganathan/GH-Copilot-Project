@@ -38,3 +38,38 @@ button {
   border: none;
   cursor: pointer;
 }
+
+.students-section {
+  margin-top: 32px;
+}
+
+.students-section h2 {
+  margin-bottom: 16px;
+  font-size: 1.25rem;
+}
+
+.student-list-status {
+  margin: 0;
+  color: #4b5563;
+}
+
+.students-table-wrapper {
+  overflow-x: auto;
+}
+
+.students-table-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.students-table-wrapper th,
+.students-table-wrapper td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #d0d7de;
+  overflow-wrap: anywhere;
+}
+
+.students-table-wrapper th {
+  font-weight: 600;
+}

@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,6 +40,7 @@ final class UiSync {
         Path doc = root.resolve(DOC);
         String original = read(doc);
         String updated = replace(original, "ui-fields", fields(html));
+        updated = replace(updated, "ui-registered-students", registeredStudents(html));
         updated = replace(updated, "ui-validation", validation(javascript));
         return new Prepared(doc, original, updated);
     }
@@ -99,6 +101,135 @@ final class UiSync {
         return "## Form fields\n\nSource: `" + HTML_SOURCE + "`\n\n"
                 + "| Field ID | Type | Required |\n| --- | --- | --- |\n"
                 + String.join("\n", rows);
+    }
+
+    private static String registeredStudents(String html) throws IOException {
+        // ParserDelegator treats HTML5 section as a simple tag; use its source offsets to isolate fragments.
+        List<Integer> sectionPositions = new ArrayList<>();
+        new ParserDelegator().parse(new StringReader(html), new HTMLEditorKit.ParserCallback() {
+            @Override
+            public void handleSimpleTag(HTML.Tag tag, MutableAttributeSet attrs, int position) {
+                if ("section".equalsIgnoreCase(tag.toString())) {
+                    sectionPositions.add(position);
+                }
+            }
+        }, true);
+        List<SectionCapture> sections = new ArrayList<>();
+        for (int position : sectionPositions) {
+            int openStart = indexOfIgnoreCase(html, "<section", position);
+            int nextClose = indexOfIgnoreCase(html, "</section", position);
+            if (openStart < 0 || (nextClose >= 0 && nextClose < openStart)) {
+                continue;
+            }
+            int openEnd = html.indexOf('>', openStart);
+            int closeStart = indexOfIgnoreCase(html, "</section", openEnd + 1);
+            if (openStart < 0 || openEnd < openStart || closeStart < 0) {
+                throw new IOException("Malformed Registered Students section element");
+            }
+            int nestedStart = indexOfIgnoreCase(html, "<section", openEnd + 1);
+            if (nestedStart >= 0 && nestedStart < closeStart) {
+                throw new IOException("Nested section elements are unsupported");
+            }
+            int closeEnd = html.indexOf('>', closeStart);
+            if (closeEnd < 0) {
+                throw new IOException("Malformed section closing tag");
+            }
+            sections.add(parseSection(html.substring(openStart, closeEnd + 1)));
+        }
+        List<SectionCapture> registeredSections = sections.stream()
+                .filter(section -> "Registered Students".equals(normalizeText(section.heading.toString())))
+                .toList();
+        if (registeredSections.size() != 1) {
+            throw new IOException("Expected exactly one Registered Students section");
+        }
+        SectionCapture section = registeredSections.get(0);
+        if (section.headingCount != 1 || section.tableCount != 1
+                || section.headerRows != 1 || section.headers.isEmpty()
+                || section.headers.stream().anyMatch(String::isBlank)) {
+            throw new IOException("Registered Students must contain one heading, one table, and one non-empty header row");
+        }
+        return "## Registered Students\n\nSource: `" + HTML_SOURCE + "`\n\n"
+                + "Table header labels (source order): "
+                + String.join(", ", section.headers.stream().map(UiSync::cell).toList());
+    }
+
+    private static SectionCapture parseSection(String source) throws IOException {
+        SectionCapture capture = new SectionCapture();
+        new ParserDelegator().parse(new StringReader(source), new HTMLEditorKit.ParserCallback() {
+            @Override
+            public void handleStartTag(HTML.Tag tag, MutableAttributeSet attrs, int position) {
+                String name = tag.toString().toLowerCase();
+                if ("h2".equals(name)) {
+                    capture.headingCount++;
+                    capture.inHeading = true;
+                } else if ("table".equals(name)) {
+                    capture.tableCount++;
+                    capture.inTable = true;
+                } else if ("tr".equals(name)) {
+                    if (capture.inTable) {
+                        capture.inHeaderRow = true;
+                        capture.currentRow = new ArrayList<>();
+                    }
+                } else if ("th".equals(name) && capture.inTable && capture.inHeaderRow) {
+                    capture.inHeaderCell = true;
+                    capture.currentHeader = new StringBuilder();
+                }
+            }
+
+            @Override
+            public void handleEndTag(HTML.Tag tag, int position) {
+                String name = tag.toString().toLowerCase();
+                if ("h2".equals(name)) {
+                    capture.inHeading = false;
+                } else if ("th".equals(name) && capture.inHeaderCell) {
+                    capture.currentRow.add(normalizeText(capture.currentHeader.toString()));
+                    capture.currentHeader = null;
+                    capture.inHeaderCell = false;
+                } else if ("tr".equals(name) && capture.inHeaderRow) {
+                    if (!capture.currentRow.isEmpty()) {
+                        capture.headerRows++;
+                        capture.headers.addAll(capture.currentRow);
+                    }
+                    capture.currentRow = null;
+                    capture.inHeaderRow = false;
+                } else if ("table".equals(name)) {
+                    capture.inTable = false;
+                }
+            }
+
+            @Override
+            public void handleText(char[] data, int position) {
+                if (capture.inHeading) {
+                    capture.heading.append(data);
+                }
+                if (capture.inHeaderCell && capture.currentHeader != null) {
+                    capture.currentHeader.append(data);
+                }
+            }
+        }, true);
+        return capture;
+    }
+
+    private static int indexOfIgnoreCase(String source, String value, int fromIndex) {
+        return source.toLowerCase(Locale.ROOT).indexOf(value.toLowerCase(Locale.ROOT), fromIndex);
+    }
+
+    private static String normalizeText(String value) {
+        return value.replaceAll("\\s+", " ").strip();
+    }
+
+    private static final class SectionCapture {
+        private final StringBuilder heading = new StringBuilder();
+        private final List<String> headers = new ArrayList<>();
+        private List<String> currentRow;
+        private StringBuilder currentHeader;
+        private int headingCount;
+        private int headerRows;
+        private int tableCount;
+        private boolean inHeading;
+        private boolean inTable;
+        private boolean inHeaderRow;
+        private boolean inHeaderCell;
     }
 
     private static String attribute(MutableAttributeSet attrs, String name) {

@@ -42,6 +42,11 @@ final class BackendApiSync {
             result.add(update(root, ROUTES_DOC, "api-routes", routesBlock(apiResult)));
             Prepared contract = update(root, CONTRACT_DOC, "api-contract", modelBlock(modelResult));
             String withRequest = GeneratedBlock.replace(contract.updated(), "api-request", requestBlock(apiResult));
+            if (apiResult.listResponse() == null) {
+                throw new IOException("Cannot generate API contract: StudentApiServer source chain was not found");
+            }
+            withRequest = GeneratedBlock.replace(withRequest, "api-list-response",
+                    listResponseBlock(apiResult.listResponse()));
             result.add(new Prepared(contract.path(), contract.original(), withRequest));
             return result;
         } catch (IllegalArgumentException e) {
@@ -120,6 +125,18 @@ final class BackendApiSync {
             out.append("| ").append(cell(name)).append(" |\n");
         }
         return out.toString();
+    }
+
+    private static String listResponseBlock(JavaSourceExtractor.ListResponse response) {
+        return "## Successful `GET /students` response\n\nSource: `" + API_SOURCE + "`\n\n"
+                + "Derived from the `/students` GET dispatch through `listStudents`, `sendJson`, "
+                + "`studentsAsJson`, `appendJsonField` and `appendJsonString`.\n\n"
+                + "- Status: `" + response.status() + "`\n"
+                + "- Media type: `" + cell(response.mediaType()) + "`\n"
+                + "- Top-level JSON value: array\n"
+                + "- Empty collection serialization: `[]`\n"
+                + "- Serialized object fields (source order): "
+                + String.join(", ", response.fields().stream().map(BackendApiSync::cell).toList());
     }
 
     private static String cell(String value) {

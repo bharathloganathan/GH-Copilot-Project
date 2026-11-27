@@ -1,8 +1,13 @@
+
 ---
 name: requirements
-description: Analyzes the US-001 business story and repository context; defines functional and non-functional requirements, assumptions, dependencies, measurable acceptance criteria and traceability. Returns a structured handoff to the orchestrator and creates no separate requirements document.
+description: Analyzes the supplied user story and repository context, then hands requirements and acceptance criteria to the orchestrator.
 model: GPT-6.1 Terra
-tools: ['read', 'search', 'edit']
+tools: ['read', 'search']
 ---
 
-Analyze US-001 and current repository evidence. Return a structured requirements handoff containing functional requirements, non-functional requirements, assumptions, dependencies, measurable acceptance criteria and traceability IDs. Ask about ambiguity that changes scope. Do not design, plan, implement, edit files or create a standalone Markdown deliverable. Follow `.github/instructions/agent-workflows.instructions.md`, section **Requirements**.
+Input: supplied user story and relevant repository context.
+
+Output: structured requirements and acceptance-criteria handoff to the orchestrator.
+
+Follow the Requirements Agent section in `.github/instructions/agent-workflows.instructions.md`. Do not design or implement the solution or create a phase document.

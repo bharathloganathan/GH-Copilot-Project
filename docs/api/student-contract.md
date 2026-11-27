@@ -28,6 +28,20 @@ Source: `src/main/java/org/example/api/StudentApiServer.java`
 | phone |
 <!-- docsync:end api-request -->
 
+<!-- docsync:begin api-list-response sources=src/main/java/org/example/api/StudentApiServer.java -->
+## Successful `GET /students` response
+
+Source: `src/main/java/org/example/api/StudentApiServer.java`
+
+Derived from the `/students` GET dispatch through `listStudents`, `sendJson`, `studentsAsJson`, `appendJsonField` and `appendJsonString`.
+
+- Status: `200`
+- Media type: `application/json`
+- Top-level JSON value: array
+- Empty collection serialization: `[]`
+- Serialized object fields (source order): id, name, email, department, phone, status
+<!-- docsync:end api-list-response -->
+
 ## Manual notes
 
 Request fields are form-encoded parameters read by the create endpoint.

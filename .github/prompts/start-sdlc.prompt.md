@@ -1,17 +1,12 @@
 ---
-description: Start the complete Agentic SDLC for US-001 (documentation synchronization).
+description: Start the complete document-driven Agentic SDLC for the supplied user story.
 agent: orchestrator
 ---
 
-Start the full Agentic SDLC for **US-001: Automated Documentation Synchronization**.
+Use the supplied user-story document as the requirements source of truth; preserve its IDs and do not invent missing requirements. If the document or path is missing or unreadable, ask for it before starting.
 
-1. Inspect the worktree and repository; do not assume earlier work or approvals are current.
-2. Delegate requirements, architecture and planning in order. Present a phase summary and stop for my approval at each gate; specialists return structured handoffs and do not create separate phase Markdown files.
-3. After the approved plan, delegate implementation to `development`, then generated documentation updates to `documentation-sync`.
-4. Delegate testing and review to `quality-review`; return defects to the owning specialist and repeat validation as needed.
-5. Delegate release readiness and PR content to `pr-management`.
-6. Only after all phases and approvals are complete, write one consolidated `docs/sdlc-report.md` with requirements, design, plan, implementation, docs sync, test/review evidence, limitations, approvals, and PR title/description/checklist.
+Inspect the worktree and applicable instructions, then follow the canonical phase order, role responsibilities, handoff requirements and approval gates in `.github/instructions/agent-workflows.instructions.md`. Obtain my explicit approval after every phase before proceeding.
 
-Generated product documentation under `docs/ui/`, `docs/backend/` and `docs/api/` remains managed by DocSync. Its sync/verify reports under `docs/reports/` are also retained.
+Run Documentation Sync after implementation and again after later source changes. Report the actual DocSync scope, results and limitations. The orchestrator creates or updates `docs/sdlc-report.md` from approved handoffs and execution evidence, then asks for final approval.
 
-Never commit, push or merge without my explicit approval. Show phase-wise progress. Follow `.github/instructions/agent-workflows.instructions.md`.
+Show phase progress. Never commit, push, merge, deploy or open a PR without separate explicit authorization.

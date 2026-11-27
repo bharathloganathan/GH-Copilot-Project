@@ -13,6 +13,14 @@ Source: `frontend/index.html`
 | studentPhone | tel | No |
 <!-- docsync:end ui-fields -->
 
+<!-- docsync:begin ui-registered-students sources=frontend/index.html -->
+## Registered Students
+
+Source: `frontend/index.html`
+
+Table header labels (source order): Student Name, Email, Department, Phone
+<!-- docsync:end ui-registered-students -->
+
 <!-- docsync:begin ui-validation sources=frontend/app.js -->
 ## Validation rules
 
