@@ -7,7 +7,7 @@ applyTo: "docs/**/*.md,README.md"
 ## Naming conventions
 - File names are lowercase kebab-case: `student-service.md`, `student-contract.md`, `endpoints.md`.
 - Folders: `docs/ui/` (frontend), `docs/backend/` (one file per Java class), `docs/api/` (endpoints and contracts), `docs/reports/` (generated reports).
-- The final agent-authored end-to-end SDLC report is `docs/sdlc-report.md`. Agent phases provide structured handoffs; do not create one Markdown file per agent or phase. Existing `requirements.md`, `architecture.md`, `design-review.md`, `impl-plan.md`, `code-review.md`, `test-report.md`, `changelog.md`, and `pr-description.md` are existing reference material, not outputs for new workflow runs unless requested.
+- The final agent-authored end-to-end SDLC report is `docs/sdlc-report.md`. Agent phases provide structured handoffs; do not create one Markdown file per agent or phase. Existing `requirements.md`, `architecture.md`, `design-review.md`, `impl-plan.md`, `code-review.md`, `changelog.md`, and `pr-description.md` are existing reference material, not outputs for new workflow runs unless requested.
 - DocSync-generated product documentation in `docs/ui/`, `docs/backend/`, `docs/api/`, plus engine reports in `docs/reports/`, are separate functional outputs and must continue to be generated/updated as required.
 
 ## Source-code traceability

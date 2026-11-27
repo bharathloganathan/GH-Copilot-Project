@@ -742,7 +742,6 @@ Return:
 ## Restrictions
 
 - Do not create `docs/code-review.md`.
-- Do not create `docs/test-report.md`.
 - Do not create separate review or testing reports.
 - Do not modify production source code.
 - Do not claim tests passed without execution evidence.
