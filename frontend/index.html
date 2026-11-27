@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Management</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Student Management</h1>
+      <form id="student-form">
+        <label for="studentName">Student name</label>
+        <input id="studentName" name="studentName" type="text" required />
+
+        <label for="studentEmail">Email</label>
+        <input id="studentEmail" name="studentEmail" type="email" required />
+
+        <label for="studentDepartment">Department</label>
+        <select id="studentDepartment" name="studentDepartment" required>
+          <option value="">Select department</option>
+          <option value="Computer Science">Computer Science</option>
+          <option value="Mathematics">Mathematics</option>
+        </select>
+
+        <label for="studentPhone">Phone (optional)</label>
+        <input id="studentPhone" name="studentPhone" type="tel" maxlength="20" />
+
+        <button type="submit">Add student</button>
+      </form>
+
+      <section class="students-section" aria-labelledby="registered-students-heading">
+        <h2 id="registered-students-heading">Registered Students</h2>
+        <p id="student-list-status" class="student-list-status" role="status" aria-live="polite">Loading students...</p>
+        <div id="students-table-container" class="students-table-wrapper" hidden>
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Student Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Department</th>
+                <th scope="col">Phone</th>
+              </tr>
+            </thead>
+            <tbody id="registered-students-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
